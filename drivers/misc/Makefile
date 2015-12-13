@@ -70,3 +70,4 @@ obj-$(CONFIG_QCOM_LIQUID_DOCK)	+= qcom_liquid_dock.o
 obj-y				+= qcom/
 obj-y += audio_service.o
 obj-$(CONFIG_TYPEC_DRIVER) += type-c/
+obj-y				+= sound_control.o
