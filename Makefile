@@ -369,24 +369,14 @@ LINUXINCLUDE    := \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-FRANKEN_CFLAGS := -ffast-math -fgcse-after-reload -fgcse-lm -fgcse-sm \
-		-fgraphite -fgraphite-identity -floop-block -floop-flatten \
-		-floop-interchange -floop-parallelize-all -floop-strip-mine \
-		-fmodulo-sched -fmodulo-sched-allow-regmoves \
-		-fno-aggressive-loop-optimizations -fno-delete-null-pointer-checks \
-		-fpredictive-commoning -fsched-spec-load -fsingle-precision-constant \
-		-ftree-loop-distribute-patterns -ftree-loop-linear -ftree-loop-vectorize \
-                -ftree-partial-pre -ftree-slp-vectorize -funswitch-loops -fvect-cost-model \
-		-march=armv8-a+crc+crypto -mtune=cortex-a57.cortex-a53 -mcpu=cortex-a57.cortex-a53
-
-
-
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -mcpu=cortex-a57.cortex-a53 -mtune=cortex-a57.cortex-a53 \
 		   -Wno-format-security \
-		   -std=gnu89 $(FRANKEN_CFLAGS)
+		   -march=armv8-a+crc+crypto -mtune=cortex-a57.cortex-a53 -mcpu=cortex-a57.cortex-a53 \
+		   -fno-delete-null-pointer-checks \
+		   -std=gnu89
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
