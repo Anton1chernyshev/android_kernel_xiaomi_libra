@@ -984,7 +984,7 @@ void msm_tlmm_gp_show_resume_irq(void)
 
 			pr_warning("%s: %d triggered %s\n",
 					__func__, virq, name);
-			log_wakeup_reason(virq);
+			log_base_wakeup_reason(virq);
 		}
 	}
 	spin_unlock_irqrestore(&ic->irq_lock, irq_flags);
