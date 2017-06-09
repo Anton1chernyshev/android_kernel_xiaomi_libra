@@ -1084,6 +1084,89 @@ static struct mux_clk cpu_debug_mux = {
 	},
 };
 
+#ifdef CONFIG_VOLTAGE_CONTROL
+extern int cpr_regulator_get_corner_voltage(struct regulator *regulator,
+		int corner);
+extern int cpr_regulator_set_corner_voltage(struct regulator *regulator,
+		int corner, int volt);
+
+ssize_t cpu_clock_get_vdd(char *buf)
+{
+	ssize_t count = 0;
+	int i, uv;
+
+	if (!buf)
+		return 0;
+
+	for (i = 1; i < a53_clk.c.num_fmax; i++) {
+		uv = cpr_regulator_get_corner_voltage(
+					a53_clk.c.vdd_class->regulator[0],
+					a53_clk.c.vdd_class->vdd_uv[i]);
+		if (uv < 0)
+			return 0;
+		count += sprintf(buf + count, "A53: %lumhz: %d mV\n",
+					a53_clk.c.fmax[i] / 1000000,
+					uv / 1000);
+	}
+
+	for (i = 1; i < a57_clk.c.num_fmax; i++) {
+		uv = cpr_regulator_get_corner_voltage(
+					a57_clk.c.vdd_class->regulator[0],
+					a57_clk.c.vdd_class->vdd_uv[i]);
+		if (uv < 0)
+			return 0;
+		count += sprintf(buf + count, "A57: %lumhz: %d mV\n",
+					a57_clk.c.fmax[i] / 1000000,
+					uv / 1000);
+	}
+
+	return count;
+}
+
+ssize_t cpu_clock_set_vdd(const char *buf, size_t count)
+{
+	int i, mv, ret;
+	char line[32];
+
+	if (!buf)
+		return -EINVAL;
+
+	for (i = 1; i < a53_clk.c.num_fmax; i++) {
+		ret = sscanf(buf, "%d", &mv);
+		if (ret != 1)
+			return -EINVAL;
+
+		ret = cpr_regulator_set_corner_voltage(
+					a53_clk.c.vdd_class->regulator[0],
+					a53_clk.c.vdd_class->vdd_uv[i],
+					mv * 1000);
+        if (ret < 0)
+			return ret;
+
+        ret = sscanf(buf, "%s", line);
+		buf += strlen(line) + 1;
+	}
+
+	for (i = 1; i < a57_clk.c.num_fmax; i++) {
+		ret = sscanf(buf, "%d", &mv);
+		if (ret != 1)
+			return -EINVAL;
+
+		ret = cpr_regulator_set_corner_voltage(
+					a57_clk.c.vdd_class->regulator[0],
+					a57_clk.c.vdd_class->vdd_uv[i],
+					mv * 1000);
+        if (ret < 0)
+			return ret;
+
+        ret = sscanf(buf, "%s", line);
+		buf += strlen(line) + 1;
+	}
+
+	return count;
+}
+#endif
+
 static struct clk *logical_cpu_to_clk(int cpu)
 {
 	struct device_node *cpu_node = of_get_cpu_node(cpu, NULL);
@@ -2139,43 +2222,6 @@ static struct platform_driver cpu_clock_8994_driver = {
 		.owner = THIS_MODULE,
 	},
 };
-
-ssize_t vc_get_vdd(char *buf)
-{
-	struct opp *opppoop;
-        struct clk *c5;
-        int i, len = 0, levels;
-
-        c5 = &a53_clk.c;
-        levels = c5->vdd_class->num_levels;
-
-	rcu_read_lock();
-        if (buf) {
-                for(i=1; i < levels; i++) {
-			opppoop = dev_pm_opp_find_freq_exact(get_cpu_device(0),
-				c5->fmax[i], true);
-                        len += sprintf(buf + len, "%umhz: %d mV\n",
-                                (unsigned int)c5->fmax[i]/1000000,
-                                (int)dev_pm_opp_get_voltage(opppoop)/1000 );
-                }
-        }
-
-        c5 = &a57_clk.c;
-        levels = c5->vdd_class->num_levels;
-
-        if (buf) {
-                for(i=1; i < levels; i++) {
-			opppoop = dev_pm_opp_find_freq_exact(get_cpu_device(4),
-				c5->fmax[i], true);
-                        len += sprintf(buf + len, "%umhz: %d mV\n",
-                                (unsigned int)c5->fmax[i]/1000000,
-                                (int)dev_pm_opp_get_voltage(opppoop)/1000 );
-                }
-        }
-	rcu_read_unlock();
-
-        return len;
-}
 
 /* CPU devices are not currently available in arch_initcall */
 static int __init cpu_clock_8994_init_opp(void)
